@@ -49,17 +49,16 @@ app.use(
 );
 
 // Step 5: app.use(cors(...)) - hardcoded array, NOT wildcard
-app.use(
-  cors({
-    origin: [
-      'http://localhost:3000',
-      'https://eventgenie-40ac3.web.app',
-      'https://eventgenie-40ac3.firebaseapp.com',
-    ],
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://eventgenie-40ac3.web.app',
+    'https://eventgenie-40ac3.firebaseapp.com'
+  ],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
 // Step 6: app.use(express.json({ limit: '10kb' }))
 app.use(express.json({ limit: BODY_LIMIT }));
