@@ -19,13 +19,13 @@ import { AuthError, DataError } from './utils/errors';
 import { log } from './utils/logger';
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY ?? 'AIzaSyFakeKeyForEventGenieConfig98',
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN ?? 'eventgenie-prod-98.firebaseapp.com',
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID ?? 'eventgenie-prod-98',
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET ?? 'eventgenie-prod-98.appspot.com',
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID ?? '123456789012',
-  appId: process.env.REACT_APP_FIREBASE_APP_ID ?? '1:123456789012:web:abcdef1234567890',
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID ?? 'G-EVENTGENIE98',
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
 };
 
 /** Initialized Firebase application instance */

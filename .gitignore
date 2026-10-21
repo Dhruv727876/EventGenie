@@ -12,9 +12,14 @@ yarn-error.log*
 # Environment files
 .env
 .env.local
+.env.production
 .env.development.local
 .env.test.local
 .env.production.local
+client/.env
+client/.env.local
+server/.env
+server/.env.local
 
 # Firebase
 .firebase/

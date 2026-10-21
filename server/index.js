@@ -51,7 +51,11 @@ app.use(
 // Step 5: app.use(cors(...)) - hardcoded array, NOT wildcard
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'https://eventgenie-prod-98.web.app'],
+    origin: [
+      'http://localhost:3000',
+      'https://eventgenie-prod-98.web.app',
+      'https://eventgenie-prod-98.firebaseapp.com',
+    ],
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
