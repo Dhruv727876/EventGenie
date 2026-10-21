@@ -53,8 +53,8 @@ app.use(
   cors({
     origin: [
       'http://localhost:3000',
-      'https://eventgenie-prod-98.web.app',
-      'https://eventgenie-prod-98.firebaseapp.com',
+      'https://eventgenie-40ac3.web.app',
+      'https://eventgenie-40ac3.firebaseapp.com',
     ],
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
