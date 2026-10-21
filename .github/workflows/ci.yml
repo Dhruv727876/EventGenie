@@ -1,0 +1,57 @@
+name: EventGenie CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+      - name: ESLint
+        working-directory: client
+        run: npx eslint src --max-warnings 0
+      - name: TypeScript Build
+        working-directory: client
+        run: npm run build
+      - name: Client Tests
+        working-directory: client
+        run: npm test -- --watchAll=false --ci
+
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+      - name: Server Tests
+        working-directory: server
+        run: npm test
+        env:
+          GEMINI_API_KEY: test-key-for-ci
+          PORT: 5000
+
+  jsdoc-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: JSDoc Coverage Check
+        run: python check_jsdoc.py
