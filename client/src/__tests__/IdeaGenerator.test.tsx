@@ -41,10 +41,8 @@ describe('IdeaGenerator component', () => {
 
     // Click fires handler
     const firstBtn = useIdeaButtons[0];
-    if (firstBtn) {
-      fireEvent.click(firstBtn);
-      expect(handleSelectIdea).toHaveBeenCalledTimes(1);
-    }
+    fireEvent.click(firstBtn);
+    expect(handleSelectIdea).toHaveBeenCalledTimes(1);
   });
 
   it('shows loading skeleton while generating', async () => {

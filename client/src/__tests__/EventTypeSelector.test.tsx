@@ -57,13 +57,11 @@ describe('EventTypeSelector component', () => {
 
     const radios = screen.getAllByRole('radio');
     const firstRadio = radios[0];
-    if (firstRadio) {
-      fireEvent.keyDown(firstRadio, { key: 'ArrowRight' });
-      expect(handleSelect).toHaveBeenCalledWith('birthday');
+    fireEvent.keyDown(firstRadio, { key: 'ArrowRight' });
+    expect(handleSelect).toHaveBeenCalledWith('birthday');
 
-      fireEvent.keyDown(firstRadio, { key: 'ArrowLeft' });
-      expect(handleSelect).toHaveBeenCalledWith('community');
-    }
+    fireEvent.keyDown(firstRadio, { key: 'ArrowLeft' });
+    expect(handleSelect).toHaveBeenCalledWith('community');
   });
 
   it('announces selection via aria-checked', () => {
