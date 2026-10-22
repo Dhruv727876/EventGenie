@@ -153,7 +153,13 @@ const IdeaGeneratorComponent: React.FC<IdeaGeneratorProps> = ({
       }
 
       const data: unknown = await response.json();
-      const replyText = isAIResponse(data) ? data.reply : (isRecord(data) && typeof data.reply === 'string' ? data.reply : '');
+      const replyText = isAIResponse(data)
+        ? data.reply
+        : (isRecord(data) && typeof data.reply === 'string' && data.reply
+            ? data.reply
+            : (isRecord(data) && typeof data.message === 'string' && data.message
+                ? data.message
+                : ''));
 
       const newIdea: EventIdea = {
         id: generateId(),

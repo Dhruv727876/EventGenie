@@ -107,9 +107,9 @@ An intelligent, GenAI-powered event planning assistant built to orchestrate unfo
 
 ## Testing
 
-Comprehensive test suites covering unit, integration, and security scenarios (49 total automated tests across 10 suites):
+Comprehensive test suites covering unit, integration, and security scenarios (53 total automated tests across 10 suites):
 - **Client Tests**: 6 test suites covering `usePlanManager` (10 tests), `EventTypeSelector` (3 tests), `BudgetTracker` (4 tests), `TimelineView` (3 tests), `ChatInterface` (1 test), and `IdeaGenerator` (3 tests) — 24 client tests total.
-- **Server Tests**: 4 test suites covering Security & Headers (8 tests), Health (1 test), Chat API (5 tests), and Gemini & NVIDIA Fallback (11 tests) — 25 server tests total.
+- **Server Tests**: 4 test suites covering Security & Headers (8 tests), Health (1 test), Chat API (5 tests), and Gemini & Fallback Service (15 tests) — 29 server tests total.
 - **JSDoc Validation**: Python-based AST and docstring audit verifying 100% documentation coverage with 0 missing items.
 
 ## CI/CD

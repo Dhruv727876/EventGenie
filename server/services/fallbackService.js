@@ -103,23 +103,7 @@ async function generateResponse(eventType, userMessage, chatHistory = []) {
 
       clearTimeout(timer);
 
-      try {
-        const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-        const parsed = JSON.parse(cleaned);
-        return {
-          reply: parsed.reply || rawText,
-          sources: Array.isArray(parsed.sources) ? parsed.sources : [],
-          nextAction: parsed.nextAction || '',
-        };
-      } catch (_parseErr) {
-        // If JSON parse fails, extract **Next Step:** if present
-        const nextStepMatch = rawText.match(/\*\*Next Step:\*\*\s*(.*)/i);
-        return {
-          reply: rawText,
-          sources: [],
-          nextAction: nextStepMatch ? nextStepMatch[1].trim() : '',
-        };
-      }
+      return parseAIResponse(rawText);
     } catch (err) {
       clearTimeout(timer);
       if (err.name === 'AbortError') {
@@ -145,8 +129,60 @@ async function generateResponse(eventType, userMessage, chatHistory = []) {
   return Promise.race([apiPromise, timeoutPromise]);
 }
 
+/**
+ * Extracts clean text from a potentially JSON-wrapped AI response.
+ * Handles markdown code fences, raw JSON, and plain text.
+ * @param {string} rawText - The raw response from the AI model
+ * @returns {{reply: string, sources: Array<string>, nextAction: string}}
+ */
+function parseAIResponse(rawText) {
+  if (!rawText || typeof rawText !== 'string') {
+    return { reply: '', sources: [], nextAction: '' };
+  }
+
+  // Step 1: Strip markdown code fences if present
+  let cleaned = rawText.trim();
+  const codeFenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeFenceMatch) {
+    cleaned = codeFenceMatch[1].trim();
+  }
+
+  // Step 2: Try to find and parse JSON object
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.reply && typeof parsed.reply === 'string') {
+        return {
+          reply: parsed.reply,
+          sources: Array.isArray(parsed.sources) ? parsed.sources : [],
+          nextAction: typeof parsed.nextAction === 'string' ? parsed.nextAction : '',
+        };
+      }
+    } catch {
+      // JSON parse failed — continue to plain text extraction
+    }
+  }
+
+  // Step 3: Extract Next Step from plain text if present
+  const nextStepMatch = rawText.match(/\*\*Next Step:\*\*\s*(.+)/i);
+
+  // Step 4: Return cleaned plain text (strip any remaining JSON artifacts)
+  const plainText = cleaned
+    .replace(/^\{[\s\S]*"reply"\s*:\s*"/, '')
+    .replace(/",\s*"sources"[\s\S]*$/, '')
+    .trim();
+
+  return {
+    reply: plainText || rawText,
+    sources: [],
+    nextAction: nextStepMatch ? nextStepMatch[1].trim() : '',
+  };
+}
+
 module.exports = {
   buildFallbackSystemPrompt,
   generateResponse,
+  parseAIResponse,
   NVIDIA_MODEL,
 };

@@ -173,9 +173,14 @@ export const usePlanManager = (userId?: string): UsePlanManagerReturn => {
           throw new ValidationError(errDetail);
         }
 
-        const replyContent = isAIResponse(rawJson)
-          ? rawJson.reply
-          : 'I have recorded your planning requirements.';
+        const data = rawJson;
+        const replyContent = isAIResponse(data)
+          ? data.reply
+          : (isRecord(data) && typeof data.reply === 'string' && data.reply
+              ? data.reply
+              : (isRecord(data) && typeof data.message === 'string' && data.message
+                  ? data.message
+                  : 'I have recorded your planning requirements.'));
 
         const assistantMsg: ChatMessage = {
           id: generateId(),

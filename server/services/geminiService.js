@@ -81,12 +81,64 @@ Your response MUST be valid JSON matching this schema:
   "nextAction": "The single next step the user should take"
 }
 If you cannot cite real official sources, return "sources": [] — DO NOT fabricate sources.
+IMPORTANT: Return ONLY the raw JSON object. Do NOT wrap it in markdown code fences. Do NOT add any text before or after the JSON.
 
 Language:
 Detect the user's language and respond in the same language.
 
 Citations & Verification:
 Cite official sources when providing regulatory or legal information. Include mandatory citations and verifiable reference guidelines for vendor cost estimates, typical timeframes, municipal regulations, and checklist recommendations.`;
+}
+
+/**
+ * Extracts clean text from a potentially JSON-wrapped AI response.
+ * Handles markdown code fences, raw JSON, and plain text.
+ * @param {string} rawText - The raw response from the AI model
+ * @returns {{reply: string, sources: Array<string>, nextAction: string}}
+ */
+function parseAIResponse(rawText) {
+  if (!rawText || typeof rawText !== 'string') {
+    return { reply: '', sources: [], nextAction: '' };
+  }
+
+  // Step 1: Strip markdown code fences if present
+  let cleaned = rawText.trim();
+  const codeFenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeFenceMatch) {
+    cleaned = codeFenceMatch[1].trim();
+  }
+
+  // Step 2: Try to find and parse JSON object
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed.reply && typeof parsed.reply === 'string') {
+        return {
+          reply: parsed.reply,
+          sources: Array.isArray(parsed.sources) ? parsed.sources : [],
+          nextAction: typeof parsed.nextAction === 'string' ? parsed.nextAction : '',
+        };
+      }
+    } catch {
+      // JSON parse failed — continue to plain text extraction
+    }
+  }
+
+  // Step 3: Extract Next Step from plain text if present
+  const nextStepMatch = rawText.match(/\*\*Next Step:\*\*\s*(.+)/i);
+
+  // Step 4: Return cleaned plain text (strip any remaining JSON artifacts)
+  const plainText = cleaned
+    .replace(/^\{[\s\S]*"reply"\s*:\s*"/, '')
+    .replace(/",\s*"sources"[\s\S]*$/, '')
+    .trim();
+
+  return {
+    reply: plainText || rawText,
+    sources: [],
+    nextAction: nextStepMatch ? nextStepMatch[1].trim() : '',
+  };
 }
 
 /**
@@ -117,19 +169,7 @@ async function generateResponse(eventType, userMessage, chatHistory = []) {
     try {
       const result = await chat.sendMessage(userMessage);
       const rawText = result.response.text();
-
-      try {
-        const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-        const parsed = JSON.parse(cleaned);
-        return {
-          reply: parsed.reply || rawText,
-          sources: Array.isArray(parsed.sources) ? parsed.sources : [],
-          nextAction: parsed.nextAction || '',
-        };
-      } catch (_parseErr) {
-        // If JSON parse fails, return raw text with empty sources
-        return { reply: rawText, sources: [], nextAction: '' };
-      }
+      return parseAIResponse(rawText);
     } catch (err) {
       const errMessage = err instanceof Error ? err.message : 'Gemini generation failure';
       throw new AIServiceError(errMessage);
@@ -151,4 +191,5 @@ async function generateResponse(eventType, userMessage, chatHistory = []) {
 module.exports = {
   buildSystemPrompt,
   generateResponse,
+  parseAIResponse,
 };

@@ -90,3 +90,30 @@ describe('Fallback Service (NVIDIA NIM)', () => {
     process.env.NVIDIA_API_KEY = original;
   });
 });
+
+describe('parseAIResponse', () => {
+  const { parseAIResponse } = require('../services/geminiService');
+
+  it('parses clean JSON', () => {
+    const result = parseAIResponse('{"reply":"Hello","sources":["src"],"nextAction":"Do this"}');
+    expect(result.reply).toBe('Hello');
+    expect(result.sources).toEqual(['src']);
+  });
+
+  it('parses JSON wrapped in markdown code fence', () => {
+    const result = parseAIResponse('```json\n{"reply":"Hello","sources":[],"nextAction":"Do this"}\n```');
+    expect(result.reply).toBe('Hello');
+  });
+
+  it('handles plain text without JSON', () => {
+    const result = parseAIResponse('Here are some tips for your wedding.\n**Next Step:** Book a venue.');
+    expect(result.reply).toContain('tips');
+    expect(result.nextAction).toContain('Book a venue');
+  });
+
+  it('handles malformed JSON gracefully', () => {
+    const result = parseAIResponse('{broken json}');
+    expect(result.reply).toBeTruthy();
+    expect(result.sources).toEqual([]);
+  });
+});
