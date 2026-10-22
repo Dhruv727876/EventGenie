@@ -7,7 +7,7 @@
 
 // --- External Dependencies ---
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // --- Components ---
@@ -60,32 +60,23 @@ describe('EventGenie Core Planning Flow Integration', () => {
   });
 
   it('completes the entire planning workflow: select event type -> send chat -> add budget item -> complete milestone', async () => {
-    await act(async () => {
-      render(<App />);
-    });
+    render(<App />);
 
     // 1. Verify Event Type Selector renders and switch persona to Birthday
     const birthdayRadio = await screen.findByRole('radio', { name: /Birthday/i });
     expect(birthdayRadio).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.click(birthdayRadio);
-    });
-
+    fireEvent.click(birthdayRadio);
     expect(birthdayRadio).toHaveAttribute('aria-checked', 'true');
 
     // 2. Chat interface is active on initial 'Plan' tab
     const chatInput = await screen.findByLabelText('Type your planning question');
     expect(chatInput).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.change(chatInput, { target: { value: 'Recommend a fun milestone theme' } });
-    });
+    fireEvent.change(chatInput, { target: { value: 'Recommend a fun milestone theme' } });
 
     const sendButton = screen.getByLabelText('Send message');
-    await act(async () => {
-      fireEvent.click(sendButton);
-    });
+    fireEvent.click(sendButton);
 
     // Verify AI response arrives and displays in the chat log
     await waitFor(() => {
@@ -96,19 +87,15 @@ describe('EventGenie Core Planning Flow Integration', () => {
 
     // 3. Switch to Budget Tab and add a budget item
     const budgetTab = screen.getByRole('tab', { name: 'Budget' });
-    await act(async () => {
-      fireEvent.click(budgetTab);
-    });
+    fireEvent.click(budgetTab);
 
     const descInput = await screen.findByLabelText('Description');
     const estInput = screen.getByLabelText('Estimated ($)');
     const addBudgetButton = screen.getByRole('button', { name: 'Add budget item' });
 
-    await act(async () => {
-      fireEvent.change(descInput, { target: { value: 'Custom Birthday Cake' } });
-      fireEvent.change(estInput, { target: { value: '350' } });
-      fireEvent.click(addBudgetButton);
-    });
+    fireEvent.change(descInput, { target: { value: 'Custom Birthday Cake' } });
+    fireEvent.change(estInput, { target: { value: '350' } });
+    fireEvent.click(addBudgetButton);
 
     await waitFor(() => {
       expect(screen.getByText('Custom Birthday Cake')).toBeInTheDocument();
@@ -116,20 +103,15 @@ describe('EventGenie Core Planning Flow Integration', () => {
 
     // 4. Switch to Timeline Tab and mark milestone complete
     const timelineTab = screen.getByRole('tab', { name: 'Timeline' });
-    await act(async () => {
-      fireEvent.click(timelineTab);
-    });
+    fireEvent.click(timelineTab);
 
     const milestoneCheckboxes = await screen.findAllByRole('checkbox');
     expect(milestoneCheckboxes.length).toBeGreaterThan(0);
 
     const firstCheckbox = milestoneCheckboxes[0];
-    if (firstCheckbox) {
-      expect(firstCheckbox).not.toBeChecked();
-      await act(async () => {
-        fireEvent.click(firstCheckbox);
-      });
-      expect(firstCheckbox).toBeChecked();
-    }
+    expect(firstCheckbox).not.toBeChecked();
+
+    fireEvent.click(firstCheckbox);
+    expect(firstCheckbox).toBeChecked();
   });
 });
