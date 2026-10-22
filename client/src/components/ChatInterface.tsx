@@ -6,7 +6,7 @@
  */
 
 // --- External Dependencies ---
-import React, { useState, useMemo, useRef, useEffect, FormEvent, ChangeEvent } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, FormEvent, ChangeEvent } from 'react';
 
 // --- Internal Modules ---
 import { ChatMessage, EventType } from '../types';
@@ -40,24 +40,27 @@ const ChatInterfaceComponent: React.FC<ChatInterfaceProps> = ({
     }
   }, [messages, isLoading]);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    const trimmed = inputText.trim();
-    if (!trimmed || isLoading) {
-      return;
-    }
-    logPlanEvent('chat_message_sent', { length: trimmed.length, eventType });
-    onSendMessage(trimmed);
-    setInputText('');
-  };
+  const handleSubmit = useCallback(
+    (e: FormEvent<HTMLFormElement>): void => {
+      e.preventDefault();
+      const trimmed = inputText.trim();
+      if (!trimmed || isLoading) {
+        return;
+      }
+      logPlanEvent('chat_message_sent', { length: trimmed.length, eventType });
+      onSendMessage(trimmed);
+      setInputText('');
+    },
+    [inputText, isLoading, eventType, onSendMessage]
+  );
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
+  const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     setInputText(e.target.value);
-  };
+  }, []);
 
-  const handleChipClick = (question: string): void => {
+  const handleChipClick = useCallback((question: string): void => {
     setInputText(question);
-  };
+  }, []);
 
   const currentQuestions = useMemo(() => {
     return SUGGESTED_QUESTIONS[eventType] ?? SUGGESTED_QUESTIONS.wedding;

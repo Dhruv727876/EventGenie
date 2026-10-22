@@ -6,7 +6,7 @@
  */
 
 // --- External Dependencies ---
-import React from 'react';
+import React, { useCallback } from 'react';
 
 /** Props interface for the Header component */
 export interface HeaderProps {
@@ -23,6 +23,13 @@ const NAV_TABS = [
 ];
 
 const HeaderComponent: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
+  const handleTabClick = useCallback(
+    (tabId: string): void => {
+      onTabChange(tabId);
+    },
+    [onTabChange]
+  );
+
   return (
     <header role="banner" className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,7 +59,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
                     id={`tab-${tab.id}`}
                     aria-controls={`tabpanel-${tab.id}`}
                     aria-selected={isActive}
-                    onClick={() => onTabChange(tab.id)}
+                    onClick={() => handleTabClick(tab.id)}
                     className={`h-11 px-5 rounded-lg text-sm font-semibold transition-all duration-150 flex items-center justify-center whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 ${
                       isActive
                         ? 'bg-orange-500 text-white shadow-sm'

@@ -6,7 +6,7 @@
  */
 
 // --- External Dependencies ---
-import React, { useState, FormEvent } from 'react';
+import React, { useState, useCallback, useMemo, FormEvent } from 'react';
 
 // --- Internal Modules ---
 import { BudgetItem } from '../types';
@@ -45,36 +45,52 @@ const BudgetTrackerComponent: React.FC<BudgetTrackerProps> = ({
   const [editEstimated, setEditEstimated] = useState<string>('');
   const [editActual, setEditActual] = useState<string>('');
 
-  const handleAddSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    const estNum = parseFloat(estimated) || 0;
-    const actNum = parseFloat(actual) || 0;
-    if (!description.trim()) {
-      return;
-    }
-    onAddItem(category, description, estNum, actNum);
-    logPlanEvent('budget_item_added', { category, estimated: estNum });
-    setDescription('');
-    setEstimated('');
-    setActual('');
-  };
+  const handleAddSubmit = useCallback(
+    (e: FormEvent<HTMLFormElement>): void => {
+      e.preventDefault();
+      const estNum = parseFloat(estimated) || 0;
+      const actNum = parseFloat(actual) || 0;
+      if (!description.trim()) {
+        return;
+      }
+      onAddItem(category, description, estNum, actNum);
+      logPlanEvent('budget_item_added', { category, estimated: estNum });
+      setDescription('');
+      setEstimated('');
+      setActual('');
+    },
+    [category, description, estimated, actual, onAddItem]
+  );
 
-  const startEditing = (item: BudgetItem): void => {
+  const startEditing = useCallback((item: BudgetItem): void => {
     setEditingId(item.id);
     setEditEstimated(item.estimated.toString());
     setEditActual(item.actual.toString());
-  };
+  }, []);
 
-  const saveEdit = (id: string): void => {
-    if (onUpdateItem) {
-      onUpdateItem(id, {
-        estimated: parseFloat(editEstimated) || 0,
-        actual: parseFloat(editActual) || 0,
-      });
-      logPlanEvent('budget_item_updated', { id });
-    }
-    setEditingId(null);
-  };
+  const saveEdit = useCallback(
+    (id: string): void => {
+      if (onUpdateItem) {
+        onUpdateItem(id, {
+          estimated: parseFloat(editEstimated) || 0,
+          actual: parseFloat(editActual) || 0,
+        });
+        logPlanEvent('budget_item_updated', { id });
+      }
+      setEditingId(null);
+    },
+    [editEstimated, editActual, onUpdateItem]
+  );
+
+  const handleRemove = useCallback(
+    (id: string, cat: string): void => {
+      onRemoveItem(id);
+      logPlanEvent('budget_updated', { action: 'remove_item', id, category: cat });
+    },
+    [onRemoveItem]
+  );
+
+  const categoryEntries = useMemo(() => Object.entries(categoryPercentages), [categoryPercentages]);
 
   return (
     <section
@@ -150,10 +166,10 @@ const BudgetTrackerComponent: React.FC<BudgetTrackerProps> = ({
       </div>
 
       {/* Category Breakdown Badges */}
-      {Object.keys(categoryPercentages).length > 0 && (
+      {categoryEntries.length > 0 && (
         <div className="mb-6 flex flex-wrap gap-2 items-center">
           <span className="text-xs font-semibold text-slate-500 uppercase">Category Spend:</span>
-          {Object.entries(categoryPercentages).map(([cat, pct]) => (
+          {categoryEntries.map(([cat, pct]) => (
             <span key={cat} className="px-3 py-1 bg-slate-100 text-slate-700 text-xs rounded-full font-medium">
               {cat}: {pct}%
             </span>
@@ -233,10 +249,7 @@ const BudgetTrackerComponent: React.FC<BudgetTrackerProps> = ({
                       )}
                       <button
                         type="button"
-                        onClick={() => {
-                          onRemoveItem(item.id);
-                          logPlanEvent('budget_updated', { action: 'remove_item', id: item.id });
-                        }}
+                        onClick={() => handleRemove(item.id, item.category)}
                         aria-label={`Remove ${item.category} budget item`}
                         className="h-11 px-3 text-xs text-red-600 hover:text-red-800 font-medium rounded-lg hover:bg-red-50 transition-colors"
                       >

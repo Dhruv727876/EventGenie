@@ -160,6 +160,22 @@ export function isVendor(value: unknown): value is Vendor {
 }
 
 /**
+ * Type guard checking if an unknown value satisfies the ChatMessage contract
+ */
+export function isChatMessage(value: unknown): value is ChatMessage {
+  if (!isRecord(value)) {
+    return false;
+  }
+  const validRole = value.role === 'user' || value.role === 'assistant';
+  return (
+    typeof value.id === 'string' &&
+    validRole &&
+    typeof value.content === 'string' &&
+    typeof value.timestamp === 'number'
+  );
+}
+
+/**
  * Type guard checking if an unknown value satisfies the PlanData contract
  */
 export function isPlanData(value: unknown): value is PlanData {
@@ -169,9 +185,14 @@ export function isPlanData(value: unknown): value is PlanData {
   return (
     isEventType(value.eventType) &&
     Array.isArray(value.budget) &&
+    value.budget.every(isBudgetItem) &&
     Array.isArray(value.timeline) &&
+    value.timeline.every(isTimelineMilestone) &&
     Array.isArray(value.vendors) &&
+    value.vendors.every(isVendor) &&
     Array.isArray(value.chatHistory) &&
+    value.chatHistory.every(isChatMessage) &&
     typeof value.lastUpdated === 'number'
   );
 }
+

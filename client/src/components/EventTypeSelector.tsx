@@ -6,7 +6,7 @@
  */
 
 // --- External Dependencies ---
-import React, { KeyboardEvent, useRef } from 'react';
+import React, { KeyboardEvent, useCallback, useRef } from 'react';
 
 // --- Internal Modules ---
 import { EventType } from '../types';
@@ -24,32 +24,42 @@ const EventTypeSelectorComponent: React.FC<EventTypeSelectorProps> = ({
 }) => {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>, currentIndex: number): void => {
-    let nextIndex = currentIndex;
+  const handleSelect = useCallback(
+    (type: EventType): void => {
+      onSelect(type);
+    },
+    [onSelect]
+  );
 
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-      event.preventDefault();
-      nextIndex = (currentIndex + 1) % EVENT_TYPE_CONFIG.length;
-    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-      event.preventDefault();
-      nextIndex = (currentIndex - 1 + EVENT_TYPE_CONFIG.length) % EVENT_TYPE_CONFIG.length;
-    } else if (event.key === ' ' || event.key === 'Enter') {
-      event.preventDefault();
-      const currentConfig = EVENT_TYPE_CONFIG[currentIndex];
-      if (currentConfig) {
-        onSelect(currentConfig.type);
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>, currentIndex: number): void => {
+      let nextIndex = currentIndex;
+
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        nextIndex = (currentIndex + 1) % EVENT_TYPE_CONFIG.length;
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        nextIndex = (currentIndex - 1 + EVENT_TYPE_CONFIG.length) % EVENT_TYPE_CONFIG.length;
+      } else if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault();
+        const currentConfig = EVENT_TYPE_CONFIG[currentIndex];
+        if (currentConfig) {
+          onSelect(currentConfig.type);
+        }
+        return;
+      } else {
+        return;
       }
-      return;
-    } else {
-      return;
-    }
 
-    const nextConfig = EVENT_TYPE_CONFIG[nextIndex];
-    if (nextConfig) {
-      onSelect(nextConfig.type);
-      cardRefs.current[nextIndex]?.focus();
-    }
-  };
+      const nextConfig = EVENT_TYPE_CONFIG[nextIndex];
+      if (nextConfig) {
+        onSelect(nextConfig.type);
+        cardRefs.current[nextIndex]?.focus();
+      }
+    },
+    [onSelect]
+  );
 
   return (
     <fieldset className="w-full border-0 p-0 m-0 mb-8" aria-labelledby="event-selector-legend">
@@ -73,7 +83,7 @@ const EventTypeSelectorComponent: React.FC<EventTypeSelectorProps> = ({
               role="radio"
               aria-checked={isSelected}
               tabIndex={0}
-              onClick={() => onSelect(config.type)}
+              onClick={() => handleSelect(config.type)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
               className={`min-h-[110px] p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between focus-visible:outline-2 focus-visible:outline-offset-2 ${
                 isSelected

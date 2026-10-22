@@ -178,14 +178,21 @@ const IdeaGeneratorComponent: React.FC<IdeaGeneratorProps> = ({
     }
   }, [eventType, selectedCategory]);
 
-  const handleSelect = (idea: EventIdea): void => {
-    logPlanEvent('idea_generated', { eventType, ideaId: idea.id, action: 'select' });
-    if (onAddToPlan) {
-      onAddToPlan(idea);
-    } else if (onSelectIdea) {
-      onSelectIdea(idea.title);
-    }
-  };
+  const handleCategorySelect = useCallback((cat: string): void => {
+    setSelectedCategory(cat);
+  }, []);
+
+  const handleSelect = useCallback(
+    (idea: EventIdea): void => {
+      logPlanEvent('idea_generated', { eventType, ideaId: idea.id, action: 'select' });
+      if (onAddToPlan) {
+        onAddToPlan(idea);
+      } else if (onSelectIdea) {
+        onSelectIdea(idea.title);
+      }
+    },
+    [eventType, onAddToPlan, onSelectIdea]
+  );
 
   return (
     <section
@@ -222,7 +229,7 @@ const IdeaGeneratorComponent: React.FC<IdeaGeneratorProps> = ({
               <button
                 key={cat}
                 type="button"
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => handleCategorySelect(cat)}
                 className={`h-11 px-4 rounded-xl text-xs font-semibold transition-colors focus-visible:outline-2 ${
                   isSelected
                     ? 'bg-orange-500 text-white shadow-sm'

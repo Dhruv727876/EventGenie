@@ -6,7 +6,7 @@
  */
 
 // --- External Dependencies ---
-import React, { useState, useMemo, FormEvent } from 'react';
+import React, { useState, useMemo, useCallback, FormEvent } from 'react';
 
 // --- Internal Modules ---
 import { TimelineMilestone } from '../types';
@@ -36,17 +36,36 @@ const TimelineViewComponent: React.FC<TimelineViewProps> = ({
     return [...milestones].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   }, [milestones]);
 
-  const handleAddSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    if (!title.trim()) {
-      return;
-    }
-    onAddMilestone(title, dueDate, notes);
-    logPlanEvent('timeline_milestone_added', { title });
-    setTitle('');
-    setDueDate('');
-    setNotes('');
-  };
+  const handleAddSubmit = useCallback(
+    (e: FormEvent<HTMLFormElement>): void => {
+      e.preventDefault();
+      if (!title.trim()) {
+        return;
+      }
+      onAddMilestone(title, dueDate, notes);
+      logPlanEvent('timeline_milestone_added', { title });
+      setTitle('');
+      setDueDate('');
+      setNotes('');
+    },
+    [title, dueDate, notes, onAddMilestone]
+  );
+
+  const handleToggle = useCallback(
+    (id: string, currentCompleted: boolean): void => {
+      onToggleComplete(id);
+      logPlanEvent('timeline_milestone_completed', { milestoneId: id, completed: !currentCompleted });
+    },
+    [onToggleComplete]
+  );
+
+  const handleRemove = useCallback(
+    (id: string): void => {
+      onRemoveMilestone(id);
+      logPlanEvent('timeline_updated', { action: 'remove_milestone', id });
+    },
+    [onRemoveMilestone]
+  );
 
   const todayIso = new Date().toISOString().split('T')[0] ?? '';
 
@@ -104,10 +123,7 @@ const TimelineViewComponent: React.FC<TimelineViewProps> = ({
                     type="checkbox"
                     id={`milestone-${m.id}`}
                     checked={m.completed}
-                    onChange={() => {
-                      onToggleComplete(m.id);
-                      logPlanEvent('timeline_milestone_completed', { milestoneId: m.id, completed: !m.completed });
-                    }}
+                    onChange={() => handleToggle(m.id, m.completed)}
                     aria-label={`Mark ${m.title} as complete`}
                     className="mt-1 h-5 w-5 rounded text-orange-500 border-slate-300 focus:ring-orange-500 cursor-pointer"
                   />
@@ -137,10 +153,7 @@ const TimelineViewComponent: React.FC<TimelineViewProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => {
-                    onRemoveMilestone(m.id);
-                    logPlanEvent('timeline_updated', { action: 'remove_milestone', id: m.id });
-                  }}
+                  onClick={() => handleRemove(m.id)}
                   aria-label={`Delete milestone ${m.title}`}
                   className="h-11 px-3 text-xs text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-50 transition-colors"
                 >

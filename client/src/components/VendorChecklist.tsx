@@ -6,7 +6,7 @@
  */
 
 // --- External Dependencies ---
-import React, { useState, useMemo, FormEvent } from 'react';
+import React, { useState, useMemo, useCallback, FormEvent } from 'react';
 
 // --- Internal Modules ---
 import { Vendor } from '../types';
@@ -55,29 +55,43 @@ const VendorChecklistComponent: React.FC<VendorChecklistProps> = ({
       .reduce((sum, v) => sum + (v.cost ?? 0), 0);
   }, [vendors]);
 
-  const handleToggleExpand = (id: string): void => {
+  const handleToggleExpand = useCallback((id: string): void => {
     setExpandedVendorId((prev) => (prev === id ? null : id));
-  };
+  }, []);
 
-  const handleCycleStatus = (vendor: Vendor): void => {
-    const nextStatus = STATUS_CYCLE[vendor.status] ?? 'pending';
-    onToggleStatus(vendor.id, nextStatus);
-    logPlanEvent('vendor_status_changed', { vendorId: vendor.id, from: vendor.status, to: nextStatus });
-    logPlanEvent('vendor_toggled', { vendorId: vendor.id, status: nextStatus });
-  };
+  const handleCycleStatus = useCallback(
+    (vendor: Vendor): void => {
+      const nextStatus = STATUS_CYCLE[vendor.status] ?? 'pending';
+      onToggleStatus(vendor.id, nextStatus);
+      logPlanEvent('vendor_status_changed', { vendorId: vendor.id, from: vendor.status, to: nextStatus });
+      logPlanEvent('vendor_toggled', { vendorId: vendor.id, status: nextStatus });
+    },
+    [onToggleStatus]
+  );
 
-  const handleAddSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    if (!name.trim()) {
-      return;
-    }
-    const costNum = parseFloat(cost) || 0;
-    onAddVendor(name, category, contact, costNum);
-    logPlanEvent('vendor_toggled', { action: 'add_vendor', name, category });
-    setName('');
-    setContact('');
-    setCost('');
-  };
+  const handleAddSubmit = useCallback(
+    (e: FormEvent<HTMLFormElement>): void => {
+      e.preventDefault();
+      if (!name.trim()) {
+        return;
+      }
+      const costNum = parseFloat(cost) || 0;
+      onAddVendor(name, category, contact, costNum);
+      logPlanEvent('vendor_toggled', { action: 'add_vendor', name, category });
+      setName('');
+      setContact('');
+      setCost('');
+    },
+    [name, category, contact, cost, onAddVendor]
+  );
+
+  const handleRemove = useCallback(
+    (id: string, vendorName: string): void => {
+      onRemoveVendor(id);
+      logPlanEvent('vendor_toggled', { action: 'remove_vendor', id, name: vendorName });
+    },
+    [onRemoveVendor]
+  );
 
   return (
     <section
@@ -150,10 +164,7 @@ const VendorChecklistComponent: React.FC<VendorChecklistProps> = ({
                 <div className="flex items-center justify-end pt-2 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => {
-                      onRemoveVendor(vendor.id);
-                      logPlanEvent('vendor_toggled', { action: 'remove_vendor', id: vendor.id });
-                    }}
+                    onClick={() => handleRemove(vendor.id, vendor.name)}
                     aria-label={`Remove vendor ${vendor.name}`}
                     className="h-11 px-3 text-xs text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50"
                   >
