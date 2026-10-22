@@ -1,0 +1,9 @@
+{
+  "short_name": "EventGenie",
+  "name": "EventGenie - AI Event Planner",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#f97316",
+  "background_color": "#ffffff",
+  "icons": []
+}

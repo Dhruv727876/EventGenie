@@ -9,7 +9,7 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, User, Auth, NextOrObserver } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, Firestore } from 'firebase/firestore';
-import { getAnalytics, logEvent, Analytics } from 'firebase/analytics';
+import type { Analytics, logEvent as LogEventFn } from 'firebase/analytics';
 
 // --- Internal Modules ---
 import { PlanData, ChatMessage, BudgetItem, isPlanData, isRecord } from './types';
@@ -41,13 +41,25 @@ export const db: Firestore = getFirestore(app);
 export { collection };
 
 let analyticsInstance: Analytics | null = null;
-try {
-  if (typeof window !== 'undefined') {
-    analyticsInstance = getAnalytics(app);
+let logEventFn: typeof LogEventFn | null = null;
+
+/**
+ * Initializes Firebase Analytics lazily after mount to minimize initial bundle payload.
+ * @param appInstance - The initialized Firebase application instance
+ * @returns Resolves when analytics initialization succeeds or fails gracefully
+ */
+export const initAnalytics = async (appInstance: FirebaseApp): Promise<void> => {
+  try {
+    if (typeof window !== 'undefined') {
+      const { getAnalytics, logEvent } = await import('firebase/analytics');
+      analyticsInstance = getAnalytics(appInstance);
+      logEventFn = logEvent;
+    }
+  } catch (_e) {
+    analyticsInstance = null;
+    logEventFn = null;
   }
-} catch (_e) {
-  analyticsInstance = null;
-}
+};
 
 /** Firebase Analytics instance if supported in current runtime */
 export const analytics: Analytics | null = analyticsInstance;
@@ -193,9 +205,9 @@ export const logPlanEvent = (
 ): void => {
   try {
     log(`Analytics Event: ${eventName}`, eventParams);
-    if (analytics !== null) {
+    if (logEventFn !== null && analyticsInstance !== null) {
       try {
-        logEvent(analytics, eventName, eventParams);
+        logEventFn(analyticsInstance, eventName, eventParams);
       } catch (_err) {
         // Analytics network or installation failure caught gracefully
       }

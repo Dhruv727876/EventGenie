@@ -24,7 +24,8 @@ jest.mock('../firebase', () => ({
   loadUserPlan: (...args: unknown[]) => mockLoadUserPlan(...args),
   saveFullPlan: (...args: unknown[]) => mockSaveUserPlan(...args),
   loadFullPlan: (...args: unknown[]) => mockLoadUserPlan(...args),
-  saveChatHistory: () => Promise.resolve(),
+  app: {},
+  initAnalytics: () => Promise.resolve(),
   recordMilestoneCompletion: (...args: unknown[]) => mockRecordMilestoneCompletion(...args),
   logPlanEvent: (...args: unknown[]) => mockLogPlanEvent(...args),
 }));

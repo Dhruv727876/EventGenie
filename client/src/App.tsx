@@ -11,7 +11,7 @@ import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react
 // --- Internal Modules ---
 import { EventType, Vendor, EventIdea } from './types';
 import { DEBOUNCE_DELAY_MS } from './constants/limits';
-import { loadUserPlan, logPlanEvent, saveUserPlan } from './firebase';
+import { app, initAnalytics, loadUserPlan, logPlanEvent, saveUserPlan } from './firebase';
 
 // --- Utilities ---
 import { generateId } from './utils/helpers';
@@ -106,9 +106,10 @@ const AppComponent: React.FC = () => {
   vendorsRef.current = vendors;
   const vendorDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // App load telemetry
+  // App load telemetry and lazy analytics initialization
   useEffect(() => {
     logPlanEvent('app_load', { timestamp: Date.now() });
+    initAnalytics(app).catch(() => {});
   }, []);
 
   // Sync returning user status from auth state
