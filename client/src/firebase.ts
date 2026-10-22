@@ -41,12 +41,12 @@ export const db: Firestore = getFirestore(app);
 export { collection };
 
 let analyticsInstance: Analytics | null = null;
-if (typeof window !== 'undefined') {
-  try {
+try {
+  if (typeof window !== 'undefined') {
     analyticsInstance = getAnalytics(app);
-  } catch (_e) {
-    analyticsInstance = null;
   }
+} catch (_e) {
+  analyticsInstance = null;
 }
 
 /** Firebase Analytics instance if supported in current runtime */
@@ -191,12 +191,16 @@ export const logPlanEvent = (
   eventName: string,
   eventParams?: Record<string, string | number | boolean>
 ): void => {
-  log(`Analytics Event: ${eventName}`, eventParams);
-  if (analytics) {
-    try {
-      logEvent(analytics, eventName, eventParams);
-    } catch (_err) {
-      // Telemetry error fallback
+  try {
+    log(`Analytics Event: ${eventName}`, eventParams);
+    if (analytics !== null) {
+      try {
+        logEvent(analytics, eventName, eventParams);
+      } catch (_err) {
+        // Analytics network or installation failure caught gracefully
+      }
     }
+  } catch (_err) {
+    // Telemetry error fallback
   }
 };
