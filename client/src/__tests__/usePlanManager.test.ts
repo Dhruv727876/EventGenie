@@ -10,6 +10,7 @@ import { renderHook, act } from '@testing-library/react';
 
 // --- Internal Modules ---
 import { usePlanManager } from '../hooks/usePlanManager';
+import { AppError, AIServiceError } from '../utils/errors';
 
 const mockSaveUserPlan = jest.fn().mockImplementation(() => Promise.resolve());
 const mockLoadUserPlan = jest.fn().mockImplementation(() => Promise.resolve(null));
@@ -107,7 +108,7 @@ describe('usePlanManager hook', () => {
 
   // Test 6: resetError clears error
   it('resetError clears error', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error('Network failure'));
+    global.fetch = jest.fn().mockRejectedValue(new AppError('Network failure', 'NETWORK_ERROR'));
 
     const { result } = renderHook(() => usePlanManager());
 
@@ -156,9 +157,13 @@ describe('usePlanManager hook', () => {
   });
 
   // Test 8: Debounces Firestore writes
-  it('debounces Firestore writes', () => {
+  it('debounces Firestore writes', async () => {
     jest.useFakeTimers();
     const { result } = renderHook(() => usePlanManager('user-123'));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     act(() => {
       result.current.setEventType('birthday');
@@ -181,9 +186,13 @@ describe('usePlanManager hook', () => {
 
   // Test 9: Handles network timeout gracefully
   it('handles network timeout gracefully', async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error('Network request timed out'));
+    global.fetch = jest.fn().mockRejectedValue(new AIServiceError('Network request timed out'));
 
     const { result } = renderHook(() => usePlanManager('user-123'));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     await act(async () => {
       await result.current.sendMessage('Plan wedding catering');
@@ -202,6 +211,10 @@ describe('usePlanManager hook', () => {
     });
 
     const { result, unmount } = renderHook(() => usePlanManager('user-123'));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
 
     await act(async () => {
       await result.current.sendMessage('Unmount test message');

@@ -59,8 +59,8 @@ An intelligent, GenAI-powered event planning assistant built to orchestrate unfo
 |                              | (Promise.race 25s Timeout)                         |
 |                              v                               v                    |
 |                    +--------------------+         +---------------------+         |
-|                    | geminiService.js   |         |   gemmaService.js   |         |
-|                    | (gemini-2.5-flash) |         | (NVIDIA NIM Stub)   |         |
+|                    | geminiService.js   | -(fail) | fallbackService.js  |         |
+|                    | (gemini-2.5-flash) | ------> | (NVIDIA DeepSeek)   |         |
 |                    +--------------------+         +---------------------+         |
 +-----------------------------------------------------------------------------------+
 ```
@@ -70,7 +70,7 @@ An intelligent, GenAI-powered event planning assistant built to orchestrate unfo
 - **Client**: React 18, TypeScript (strict mode, zero `any`, zero `as` assertions, zero `!`), Tailwind CSS, Create React App.
 - **Server**: Node.js + Express (plain .js, CommonJS), hardened with Helmet, CORS, rate limiting, and XSS sanitization.
 - **Primary AI Provider**: `@google/generative-ai` with model `gemini-2.5-flash`.
-- **Fallback AI Provider**: NVIDIA NIM / Gemma (stubbed fallback with identical resilient interface and 25s timeout).
+- **AI Fallback**: NVIDIA NIM (DeepSeek V4.1 Flash) providing OpenAI-compatible secondary inference with 25s AbortController timeout.
 - **Firebase Ecosystem**: Firebase Authentication (anonymous session persistence), Cloud Firestore (user-scoped state with merge updates), Firebase Analytics (event logging across 13+ distinct action types), and Firebase Hosting.
 - **Testing**: Jest + Supertest (Server API & Security), React Testing Library + Jest (Client Hooks & Accessible UI).
 - **CI/CD**: GitHub Actions workflow running linting, TypeScript build, test execution, and JSDoc validation.
@@ -93,8 +93,8 @@ An intelligent, GenAI-powered event planning assistant built to orchestrate unfo
 - **Route-Specific Rate Limiting**: Chat limited to 20 req/min and Ideas to 15 req/min, returning HTTP 429 on abuse.
 - **Deep Input Validation**: Strict parameter checks and length boundaries using express-validator.
 - **Recursive XSS Sanitization**: All incoming string inputs sanitized via the `xss` library before reaching business logic.
-- **Strict Environment Validation**: Immediate process termination (`process.exit(1)`) on boot if required credentials are missing.
-- **API Key Isolation**: Server-only handling of `GEMINI_API_KEY`; completely absent from client bundles.
+- **Strict Environment Validation**: Immediate process termination (`process.exit(1)`) on boot if required credentials are missing, and non-fatal warning if NVIDIA key is omitted.
+- **API Key Isolation**: Server-only handling of `GEMINI_API_KEY` and `NVIDIA_API_KEY`; completely absent from client bundles.
 
 ## Accessibility
 
@@ -107,9 +107,9 @@ An intelligent, GenAI-powered event planning assistant built to orchestrate unfo
 
 ## Testing
 
-Comprehensive test suites covering unit, integration, and security scenarios:
-- **Client Tests**: 4 test suites covering `usePlanManager` (10 tests), `EventTypeSelector` (3 tests), `BudgetTracker` (4 tests), and `TimelineView` (3 tests) — 20 client tests total.
-- **Server Tests**: 4 test suites covering Security & Headers (8 tests), Health (1 test), Chat API (5 tests), and Gemini Prompts (6 tests) — 20 server tests total.
+Comprehensive test suites covering unit, integration, and security scenarios (49 total automated tests across 10 suites):
+- **Client Tests**: 6 test suites covering `usePlanManager` (10 tests), `EventTypeSelector` (3 tests), `BudgetTracker` (4 tests), `TimelineView` (3 tests), `ChatInterface` (1 test), and `IdeaGenerator` (3 tests) — 24 client tests total.
+- **Server Tests**: 4 test suites covering Security & Headers (8 tests), Health (1 test), Chat API (5 tests), and Gemini & NVIDIA Fallback (11 tests) — 25 server tests total.
 - **JSDoc Validation**: Python-based AST and docstring audit verifying 100% documentation coverage with 0 missing items.
 
 ## CI/CD
@@ -189,6 +189,7 @@ python check_jsdoc.py
 |---|---|---|---|
 | `PORT` | Server | Express HTTP listening port | `5000` |
 | `GEMINI_API_KEY` | Server | Google AI Studio API key for Gemini 2.5 Flash | `AIzaSy...` |
+| `NVIDIA_API_KEY` | Server | NVIDIA NIM API key for DeepSeek V4.1 Flash fallback | `nvapi-...` |
 | `REACT_APP_API_URL` | Client | URL of backend Express proxy server | `http://localhost:5000` |
 | `REACT_APP_FIREBASE_API_KEY` | Client | Firebase project web API key | `AIzaSy...` |
 | `REACT_APP_FIREBASE_AUTH_DOMAIN` | Client | Firebase auth domain | `eventgenie-prod-98.firebaseapp.com` |

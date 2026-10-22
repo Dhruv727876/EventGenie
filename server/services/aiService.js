@@ -1,15 +1,15 @@
 /**
  * @module EventGenie/AIService
- * @description Master AI orchestrator attempting primary Gemini 2.5 Flash and resiliently falling back to Gemma
+ * @description Master AI orchestrator: Primary: Gemini 2.5 Flash | Fallback: NVIDIA NIM (DeepSeek V4.1 Flash)
  * @version 1.0.0
  * @license MIT
  */
 
 const geminiService = require('./geminiService');
-const gemmaService = require('./gemmaService');
+const fallbackService = require('./fallbackService');
 
 /**
- * Orchestrates AI response generation with Gemini 2.5 Flash as primary and NVIDIA NIM Gemma as fallback
+ * Orchestrates AI response generation: Primary: Gemini 2.5 Flash | Fallback: NVIDIA NIM (DeepSeek V4.1 Flash)
  * @param {string} eventType - The event persona type ('wedding', 'birthday', 'community')
  * @param {string} userMessage - Prompt query from the user
  * @param {Array<object>} [chatHistory=[]] - Chronological conversation history
@@ -17,10 +17,20 @@ const gemmaService = require('./gemmaService');
  */
 async function getAIResponse(eventType, userMessage, chatHistory = []) {
   try {
+    // 1. Try geminiService.generateResponse()
     return await geminiService.generateResponse(eventType, userMessage, chatHistory);
   } catch (_geminiError) {
-    // Primary Gemini call failed or timed out; seamlessly fallback to NVIDIA NIM Gemma stub
-    return await gemmaService.generateResponse(eventType, userMessage, chatHistory);
+    try {
+      // 2. On failure -> try fallbackService.generateResponse() (real NVIDIA call)
+      return await fallbackService.generateResponse(eventType, userMessage, chatHistory);
+    } catch (_fallbackError) {
+      // 3. On failure -> return static error message
+      return {
+        reply: 'We are currently experiencing high demand and our AI services are temporarily unavailable. Please try again in a few moments.',
+        sources: [],
+        nextAction: 'Retry your request in a few moments.',
+      };
+    }
   }
 }
 

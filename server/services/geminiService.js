@@ -74,8 +74,13 @@ Hard Limits:
 Never provide medical, legal, or financial advice beyond general planning guidance.
 
 Output Format:
-Always structure responses with clear headings. End every response with exactly ONE concrete next action the user should take, formatted as: **Next Step:** [action]
-When structured output mode is required, prefix with the EVENT_PLAN: tag.
+Your response MUST be valid JSON matching this schema:
+{
+  "reply": "Your main response text here with clear headings, ending with **Next Step:** [action]",
+  "sources": ["Actual source 1", "Actual source 2"],
+  "nextAction": "The single next step the user should take"
+}
+If you cannot cite real official sources, return "sources": [] — DO NOT fabricate sources.
 
 Language:
 Detect the user's language and respond in the same language.
@@ -111,24 +116,20 @@ async function generateResponse(eventType, userMessage, chatHistory = []) {
   const aiPromise = (async () => {
     try {
       const result = await chat.sendMessage(userMessage);
-      const replyText = result.response.text();
+      const rawText = result.response.text();
 
-      const sources = [
-        'EventGenie Curated Industry Guidelines',
-        'The Knot & EventMB Planning Standards',
-      ];
-
-      let nextAction = 'Review your budget allocations for this category.';
-      const actionMatch = replyText.match(/\*\*Next Step:\*\*\s*([^\n\r]+)/i) || replyText.match(/Next Action:\s*([^\n\r]+)/i);
-      if (actionMatch && actionMatch[1]) {
-        nextAction = actionMatch[1].trim();
+      try {
+        const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const parsed = JSON.parse(cleaned);
+        return {
+          reply: parsed.reply || rawText,
+          sources: Array.isArray(parsed.sources) ? parsed.sources : [],
+          nextAction: parsed.nextAction || '',
+        };
+      } catch (_parseErr) {
+        // If JSON parse fails, return raw text with empty sources
+        return { reply: rawText, sources: [], nextAction: '' };
       }
-
-      return {
-        reply: replyText,
-        sources,
-        nextAction,
-      };
     } catch (err) {
       const errMessage = err instanceof Error ? err.message : 'Gemini generation failure';
       throw new AIServiceError(errMessage);

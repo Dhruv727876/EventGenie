@@ -8,6 +8,7 @@
 const { body, validationResult } = require('express-validator');
 const xss = require('xss');
 const { MAX_INPUT_LENGTH, HTTP_STATUS } = require('../utils/constants');
+const { ValidationError } = require('../utils/errors');
 
 /**
  * Recursively sanitizes strings within an object or array to prevent Cross-Site Scripting (XSS).
@@ -69,7 +70,7 @@ const validateChatInput = [
     .custom((val) => {
       const num = Number(val);
       if (num < 0) {
-        throw new Error('Budget value cannot be negative');
+        throw new ValidationError('Budget value cannot be negative');
       }
       return true;
     }),
@@ -78,7 +79,7 @@ const validateChatInput = [
     .custom((val) => {
       const num = Number(val);
       if (num < 0) {
-        throw new Error('Cost value cannot be negative');
+        throw new ValidationError('Cost value cannot be negative');
       }
       return true;
     }),
@@ -108,7 +109,7 @@ const validateIdeasInput = [
     .custom((val) => {
       const num = Number(val);
       if (num < 0) {
-        throw new Error('Budget value cannot be negative');
+        throw new ValidationError('Budget value cannot be negative');
       }
       return true;
     }),

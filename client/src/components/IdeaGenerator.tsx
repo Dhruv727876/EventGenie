@@ -15,6 +15,7 @@ import { logPlanEvent } from '../firebase';
 
 // --- Utilities ---
 import { generateId } from '../utils/helpers';
+import { AIServiceError } from '../utils/errors';
 
 /** Props interface for the IdeaGenerator component */
 export interface IdeaGeneratorProps {
@@ -148,7 +149,7 @@ const IdeaGeneratorComponent: React.FC<IdeaGeneratorProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned status ${response.status}`);
+        throw new AIServiceError('Failed to generate ideas');
       }
 
       const data: unknown = await response.json();

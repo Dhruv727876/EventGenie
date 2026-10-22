@@ -8,7 +8,7 @@
 // --- External Dependencies ---
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, User, Auth, NextOrObserver } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, Firestore } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, Firestore } from 'firebase/firestore';
 import { getAnalytics, logEvent, Analytics } from 'firebase/analytics';
 
 // --- Internal Modules ---
@@ -36,6 +36,9 @@ export const auth: Auth = getAuth(app);
 
 /** Cloud Firestore database service instance */
 export const db: Firestore = getFirestore(app);
+
+/** Cloud Firestore collection reference helper */
+export { collection };
 
 let analyticsInstance: Analytics | null = null;
 if (typeof window !== 'undefined') {

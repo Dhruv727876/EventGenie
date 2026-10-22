@@ -16,6 +16,10 @@ if (!process.env.GEMINI_API_KEY || !process.env.PORT) {
   process.exit(1);
 }
 
+if (!process.env.NVIDIA_API_KEY) {
+  process.stdout.write('[WARN] NVIDIA_API_KEY not set — AI fallback disabled\n');
+}
+
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -128,13 +132,30 @@ app.use((req, res) => {
 // Step 11: Global error handler (err, req, res, next) — MUST have 4 parameters, never expose stack
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  if (err.type === 'entity.parse.failed' || (err instanceof SyntaxError && err.status === 400 && 'body' in err)) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Malformed JSON payload' });
+  const statusCode = err.statusCode || (err.status && typeof err.status === 'number' ? err.status : 500);
+
+  // Generic safe messages only — never expose internal details
+  const safeMessages = {
+    400: 'Bad request',
+    401: 'Unauthorized',
+    403: 'Forbidden',
+    404: 'Not found',
+    429: 'Too many requests',
+    500: 'Internal server error',
+    503: 'Service unavailable',
+  };
+
+  const message = safeMessages[statusCode] || 'An error occurred';
+
+  // Log full error server-side only
+  if (typeof process !== 'undefined' && process.stdout?.write) {
+    process.stdout.write(`[ERROR ${statusCode}] ${err.message}\n`);
   }
 
-  const statusCode = err.statusCode || (err.status && typeof err.status === 'number' ? err.status : 500);
-  const message = statusCode === 500 ? 'Internal server error' : err.message;
-  res.status(statusCode).json({ error: message });
+  res.status(statusCode).json({
+    error: message,
+    code: err.code || 'UNKNOWN_ERROR',
+  });
 });
 
 // Step 12: app.listen with process.stdout.write for boot log

@@ -7,7 +7,7 @@
 
 // --- External Dependencies ---
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // --- Components ---
@@ -45,5 +45,59 @@ describe('IdeaGenerator component', () => {
       fireEvent.click(firstBtn);
       expect(handleSelectIdea).toHaveBeenCalledTimes(1);
     }
+  });
+
+  it('shows loading skeleton while generating', async () => {
+    let resolvePromise: (value: unknown) => void = () => {};
+    global.fetch = jest.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePromise = resolve;
+        })
+    );
+
+    render(
+      <IdeaGenerator
+        eventType="wedding"
+        onSelectIdea={jest.fn()}
+      />
+    );
+
+    const generateBtn = screen.getByRole('button', { name: 'Generate new event ideas' });
+    fireEvent.click(generateBtn);
+
+    const skeleton = screen.getByRole('status');
+    expect(skeleton).toBeInTheDocument();
+    expect(screen.getByText('Generating ideas...')).toBeInTheDocument();
+
+    // Clean up pending promise inside act
+    await act(async () => {
+      resolvePromise({
+        ok: true,
+        json: async () => ({ reply: 'Creative idea spark' }),
+      });
+      await Promise.resolve();
+    });
+  });
+
+  it('displays error state on API failure', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    });
+
+    render(
+      <IdeaGenerator
+        eventType="wedding"
+        onSelectIdea={jest.fn()}
+      />
+    );
+
+    const generateBtn = screen.getByRole('button', { name: 'Generate new event ideas' });
+    fireEvent.click(generateBtn);
+
+    const errorAlert = await screen.findByRole('alert');
+    expect(errorAlert).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 });

@@ -51,3 +51,42 @@ describe('geminiService - buildSystemPrompt', () => {
     expect(prompt).toContain('**Next Step:** [action]');
   });
 });
+
+describe('Fallback Service (NVIDIA NIM)', () => {
+  it('buildFallbackSystemPrompt includes wedding pillars', () => {
+    const { buildFallbackSystemPrompt } = require('../services/fallbackService');
+    const prompt = buildFallbackSystemPrompt('wedding');
+    expect(prompt).toContain('venue');
+    expect(prompt).toContain('catering');
+    expect(prompt).toContain('Next Step');
+  });
+
+  it('buildFallbackSystemPrompt includes community pillars', () => {
+    const { buildFallbackSystemPrompt } = require('../services/fallbackService');
+    const prompt = buildFallbackSystemPrompt('community');
+    expect(prompt).toContain('permits');
+    expect(prompt).toContain('volunteers');
+  });
+
+  it('uses deepseek-ai/deepseek-v4.1-flash model string', () => {
+    const { NVIDIA_MODEL } = require('../services/fallbackService');
+    expect(NVIDIA_MODEL).toBe('deepseek-ai/deepseek-v4.1-flash');
+  });
+
+  it('buildFallbackSystemPrompt includes DeepSeek structured planning directive', () => {
+    const { buildFallbackSystemPrompt } = require('../services/fallbackService');
+    const prompt = buildFallbackSystemPrompt('wedding');
+    expect(prompt).toContain('You are a highly capable planning AI. Provide detailed, structured responses.');
+  });
+
+  it('generateResponse throws when NVIDIA_API_KEY is missing', async () => {
+    const original = process.env.NVIDIA_API_KEY;
+    delete process.env.NVIDIA_API_KEY;
+    // Clear require cache to re-evaluate
+    delete require.cache[require.resolve('../services/fallbackService')];
+    const { generateResponse } = require('../services/fallbackService');
+    await expect(generateResponse('wedding', 'test', []))
+      .rejects.toThrow();
+    process.env.NVIDIA_API_KEY = original;
+  });
+});

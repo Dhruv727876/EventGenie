@@ -44,6 +44,7 @@ jobs:
         run: npm test
         env:
           GEMINI_API_KEY: test-key-for-ci
+          NVIDIA_API_KEY: test-nvidia-key-for-ci
           PORT: 5000
 
   jsdoc-check:
